@@ -3,6 +3,7 @@ package mortar
 import (
 	"context"
 	"errors"
+	"log"
 	"sync/atomic"
 )
 
@@ -33,6 +34,7 @@ type Pool struct {
 	state          int64
 	taskC          chan *Task
 	closeC         chan bool
+	PanicHandler   func(interface{})
 }
 
 // NewPool init pool
@@ -88,6 +90,13 @@ func (p *Pool) run(ctx context.Context) {
 	go func(ctx context.Context) {
 		defer func() {
 			p.decRunning()
+			if r := recover(); r != nil {
+				if p.PanicHandler != nil {
+					p.PanicHandler(r)
+				} else {
+					log.Printf("Worker panic: %s\n", r)
+				}
+			}
 		}()
 
 		for {

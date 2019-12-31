@@ -8,13 +8,11 @@ import (
 )
 
 func main() {
-	// create a task pool with cap 10 (max 10 workers)
 	pool, err := mortar.NewPool(10)
 	if err != nil {
 		panic(err)
 	}
 
-	// create task
 	task := &mortar.Task{
 		Handler: func(v ...interface{}) {
 		},
@@ -23,8 +21,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 	for i := 0; i < 5; i++ {
-		// put task to pool
-		pool.Put(ctx, task) // 5 second later workers will be destroyed
+		pool.Put(ctx, task) // 5 秒后所有 worker 自动销毁
 	}
 
 	fmt.Println(pool.GetRunningWorkers()) // 5

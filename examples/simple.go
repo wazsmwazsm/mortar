@@ -8,14 +8,14 @@ import (
 )
 
 func main() {
-	// create a task pool with cap 10 (max 10 workers)
+	// 创建容量为 10 的任务池
 	pool, err := mortar.NewPool(10)
 	if err != nil {
 		panic(err)
 	}
 
 	wg := new(sync.WaitGroup)
-	// create task
+	// 创建任务
 	task := &mortar.Task{
 		Handler: func(v ...interface{}) {
 			wg.Done()
@@ -25,30 +25,31 @@ func main() {
 
 	for i := 0; i < 1000; i++ {
 		wg.Add(1)
-		// add parmas for task
+		// 添加任务函数的参数
 		task.Params = []interface{}{i, i * 2, "hello"}
-		// put task to pool
+		// 将任务放入任务池
 		pool.Put(context.Background(), task)
 	}
 
 	wg.Add(1)
+	// 再创建一个任务
 	pool.Put(context.Background(), &mortar.Task{
 		Handler: func(v ...interface{}) {
 			wg.Done()
 			fmt.Println(v)
 		},
-		Params: []interface{}{"hi!"}, // set params when create task
+		Params: []interface{}{"hi!"}, // 也可以在创建任务时设置参数
 	})
 
 	wg.Wait()
 
-	// close pool graceful
+	// 安全关闭任务池（保证已加入池中的任务被消费完）
 	pool.Close()
-	// put return error when pool already closed
+	// 如果任务池已经关闭, Put() 方法会返回 ErrPoolAlreadyClosed 错误
 	err = pool.Put(context.Background(), &mortar.Task{
 		Handler: func(v ...interface{}) {},
 	})
 	if err != nil {
-		fmt.Println(err) // pool already closed
+		fmt.Println(err) // print: pool already closed
 	}
 }

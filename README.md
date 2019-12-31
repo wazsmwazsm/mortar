@@ -1,4 +1,4 @@
-# mortar
+# Mortar
 A goroutine task pool
 
 一个简单好用的高性能任务池
@@ -22,3 +22,146 @@ mortar 限制了最多可启动的 goroutine 数量, 同时保持和原生 gorou
 
 消费任务: worker（goroutine）从 channel 中读出任务执行
 
+## 使用
+
+### task struct
+
+每个任务是一个结构体, Handler 是要执行的任务函数, Params 是要传入 Handler 的参数
+
+```go
+type Task struct {
+	Handler func(v ...interface{})
+	Params  []interface{}
+}
+```
+
+### NewPool
+
+NewPool() 方法创建一个任务池结构, 返回其指针
+
+```go
+func NewPool(capacity uint64) (*Pool, error)
+```
+
+### Put
+
+Put() 方法来将一个任务放入池中, 并启动一个 worker。设置 context 可以控制 worker 的生命周期（当任务池满时, 设置无效）
+
+```go
+func (p *Pool) Put(ctx context.Context, task *Task) error 
+```
+
+### GetCap
+
+获取任务池容量, 创建任务池时已确定
+```go
+func (p *Pool) GetCap() uint64
+```
+
+### GetRunningWorkers
+
+获取当前运行 worker 的数量
+```go
+func (p *Pool) GetRunningWorkers() uint64 
+```
+
+### Close()
+
+安全关闭任务池。Close() 方法会先阻止 Put() 方法继续放入任务, 等待所有任务都被消费运行后, 销毁所有 worker, 关闭任务 channel。
+```go
+func (p *Pool) Close() 
+```
+
+### panic handler
+
+每个 worker 都是一个原生 goroutine, 为保证程序的安全运行, 任务池会 recover 所有 worker 中的 panic, 并提供自定义的 panic 处理能力（不设置 PanicHandler 默认会打印 panic 的异常栈）。
+
+```go
+pool.PanicHandler = func(r interface{}) {
+	// handle panic
+	log.Println(r) 
+}
+```
+
+## 例子
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"github.com/wazsmwazsm/mortar"
+	"sync"
+)
+
+func main() {
+	// 创建容量为 10 的任务池
+	pool, err := mortar.NewPool(10)
+	if err != nil {
+		panic(err)
+	}
+
+	wg := new(sync.WaitGroup)
+	// 创建任务
+	task := &mortar.Task{
+		Handler: func(v ...interface{}) {
+			wg.Done()
+			fmt.Println(v)
+		},
+	}
+
+	for i := 0; i < 1000; i++ {
+		wg.Add(1)
+		// 添加任务函数的参数
+		task.Params = []interface{}{i, i * 2, "hello"}
+		// 将任务放入任务池
+		pool.Put(context.Background(), task)
+	}
+
+	wg.Add(1)
+	// 再创建一个任务
+	pool.Put(context.Background(), &mortar.Task{
+		Handler: func(v ...interface{}) {
+			wg.Done()
+			fmt.Println(v)
+		},
+		Params: []interface{}{"hi!"}, // 也可以在创建任务时设置参数
+	})
+
+	wg.Wait()
+
+	// 安全关闭任务池（保证已加入池中的任务被消费完）
+	pool.Close()
+	// 如果任务池已经关闭, Put() 方法会返回 ErrPoolAlreadyClosed 错误
+	err = pool.Put(context.Background(), &mortar.Task{
+		Handler: func(v ...interface{}) {},
+	})
+	if err != nil {
+		fmt.Println(err) // print: pool already closed
+	}
+}
+
+```
+
+更多例子参考 examples 目录下的文件
+
+
+## benchmark
+
+100w 次执行，原子增量操作
+
+模式 | 操作时间消耗 | 内存分配大小 | 内存分配次数
+-|-|-|-
+原生 goroutine (100w goroutine) |	1596177880 ns/op |	103815552 B/op	|  240022 allocs/op 
+任务池开启 20 个 worker 20 goroutine) | 1378909099 ns/op	  | 15312 B/op	  |    89 allocs/op
+
+### 对比
+
+使用任务池和原生 goroutine 性能相近（略好于原生）
+
+使用任务池比直接 goroutine 内存分配节省 7000 倍左右, 内存分配次数减少 2700 倍左右
+
+# License
+
+The Mortar is open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT).
