@@ -3,14 +3,14 @@ package mortar
 import (
 	"context"
 	"errors"
-	"fmt"
-	"sync"
 	"sync/atomic"
 )
 
 var (
 	// ErrInvalidPoolCap return if pool size <= 0
 	ErrInvalidPoolCap = errors.New("invalid pool cap")
+	// ErrPoolAlreadyClosed put task but pool already closed
+	ErrPoolAlreadyClosed = errors.New("pool already closed")
 )
 
 const (
@@ -33,7 +33,6 @@ type Pool struct {
 	state          int64
 	taskC          chan *Task
 	closeC         chan bool
-	sync.RWMutex
 }
 
 // NewPool init pool
@@ -68,10 +67,10 @@ func (p *Pool) decRunning() {
 }
 
 // Put put a task to pool
-func (p *Pool) Put(ctx context.Context, task *Task) {
+func (p *Pool) Put(ctx context.Context, task *Task) error {
 
-	if p.getPoolState() == STOPED {
-		return
+	if p.state == STOPED {
+		return ErrPoolAlreadyClosed
 	}
 
 	if p.GetRunningWorkers() < p.GetCap() {
@@ -79,6 +78,8 @@ func (p *Pool) Put(ctx context.Context, task *Task) {
 	}
 
 	p.taskC <- task
+
+	return nil
 }
 
 func (p *Pool) run(ctx context.Context) {
@@ -105,26 +106,11 @@ func (p *Pool) run(ctx context.Context) {
 	}(ctx)
 }
 
-func (p *Pool) setPoolState(state int64) {
-	p.Lock()
-	defer p.Unlock()
-
-	p.state = state
-}
-
-func (p *Pool) getPoolState() int64 {
-	p.RLock()
-	defer p.RUnlock()
-
-	return p.state
-}
-
 // Close close pool graceful
 func (p *Pool) Close() {
-	p.setPoolState(STOPED) // stop put task
-	fmt.Println(len(p.taskC))
-	for len(p.taskC) > 0 { // wait all task be consumed
+	p.state = STOPED // stop put task
 
+	for len(p.taskC) > 0 { // wait all task be consumed
 	}
 
 	p.closeC <- true

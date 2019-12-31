@@ -24,7 +24,7 @@ func BenchmarkGoroutine(b *testing.B) {
 func BenchmarkPut(b *testing.B) {
 	pool, err := NewPool(10)
 	if err != nil {
-		panic(err)
+		b.Error(err)
 	}
 
 	ctx := context.Background()
@@ -45,9 +45,9 @@ func BenchmarkGoroutineSetTimes(b *testing.B) {
 }
 
 func BenchmarkPutSetTimes(b *testing.B) {
-	pool, err := NewPool(10)
+	pool, err := NewPool(20)
 	if err != nil {
-		panic(err)
+		b.Error(err)
 	}
 
 	ctx := context.Background()
