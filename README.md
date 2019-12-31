@@ -151,10 +151,10 @@ func main() {
 
 100w 次执行，原子增量操作
 
-模式 | 操作时间消耗 | 内存分配大小 | 内存分配次数
+模式 | 操作时间消耗 ns/op | 内存分配大小 B/op | 内存分配次数 allocs/op
 -|-|-|-
-原生 goroutine (100w goroutine) |	1596177880 ns/op |	103815552 B/op	|  240022 allocs/op 
-任务池开启 20 个 worker 20 goroutine) | 1378909099 ns/op	  | 15312 B/op	  |    89 allocs/op
+原生 goroutine (100w goroutine) |	1596177880  |	103815552 	|  240022  
+任务池开启 20 个 worker 20 goroutine) | 1378909099 	  | 15312 	  |    89 
 
 ### 对比
 
