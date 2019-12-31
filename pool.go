@@ -1,7 +1,6 @@
 package mortar
 
 import (
-	"context"
 	"errors"
 	"log"
 	"sync/atomic"
@@ -69,14 +68,14 @@ func (p *Pool) decRunning() {
 }
 
 // Put put a task to pool
-func (p *Pool) Put(ctx context.Context, task *Task) error {
+func (p *Pool) Put(task *Task) error {
 
 	if p.state == STOPED {
 		return ErrPoolAlreadyClosed
 	}
 
 	if p.GetRunningWorkers() < p.GetCap() {
-		p.run(ctx)
+		p.run()
 	}
 
 	p.taskC <- task
@@ -84,10 +83,10 @@ func (p *Pool) Put(ctx context.Context, task *Task) error {
 	return nil
 }
 
-func (p *Pool) run(ctx context.Context) {
+func (p *Pool) run() {
 	p.incRunning()
 
-	go func(ctx context.Context) {
+	go func() {
 		defer func() {
 			p.decRunning()
 			if r := recover(); r != nil {
@@ -106,13 +105,11 @@ func (p *Pool) run(ctx context.Context) {
 					return
 				}
 				task.Handler(task.Params...)
-			case <-ctx.Done():
-				return
 			case <-p.closeC:
 				return
 			}
 		}
-	}(ctx)
+	}()
 }
 
 // Close close pool graceful

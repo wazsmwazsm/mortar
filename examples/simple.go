@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"github.com/wazsmwazsm/mortar"
 	"sync"
@@ -28,12 +27,12 @@ func main() {
 		// 添加任务函数的参数
 		task.Params = []interface{}{i, i * 2, "hello"}
 		// 将任务放入任务池
-		pool.Put(context.Background(), task)
+		pool.Put(task)
 	}
 
 	wg.Add(1)
 	// 再创建一个任务
-	pool.Put(context.Background(), &mortar.Task{
+	pool.Put(&mortar.Task{
 		Handler: func(v ...interface{}) {
 			wg.Done()
 			fmt.Println(v)
@@ -46,7 +45,7 @@ func main() {
 	// 安全关闭任务池（保证已加入池中的任务被消费完）
 	pool.Close()
 	// 如果任务池已经关闭, Put() 方法会返回 ErrPoolAlreadyClosed 错误
-	err = pool.Put(context.Background(), &mortar.Task{
+	err = pool.Put(&mortar.Task{
 		Handler: func(v ...interface{}) {},
 	})
 	if err != nil {

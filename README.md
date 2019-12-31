@@ -45,10 +45,10 @@ func NewPool(capacity uint64) (*Pool, error)
 
 ### Put
 
-Put() 方法来将一个任务放入池中, 并启动一个 worker。设置 context 可以控制 worker 的生命周期（当任务池满时, 设置无效）
+Put() 方法来将一个任务放入池中, 并启动一个 worker。
 
 ```go
-func (p *Pool) Put(ctx context.Context, task *Task) error 
+func (p *Pool) Put(task *Task) error 
 ```
 
 ### GetCap
@@ -89,7 +89,6 @@ pool.PanicHandler = func(r interface{}) {
 package main
 
 import (
-	"context"
 	"fmt"
 	"github.com/wazsmwazsm/mortar"
 	"sync"
@@ -116,12 +115,12 @@ func main() {
 		// 添加任务函数的参数
 		task.Params = []interface{}{i, i * 2, "hello"}
 		// 将任务放入任务池
-		pool.Put(context.Background(), task)
+		pool.Put(task)
 	}
 
 	wg.Add(1)
 	// 再创建一个任务
-	pool.Put(context.Background(), &mortar.Task{
+	pool.Put(&mortar.Task{
 		Handler: func(v ...interface{}) {
 			wg.Done()
 			fmt.Println(v)
@@ -134,7 +133,7 @@ func main() {
 	// 安全关闭任务池（保证已加入池中的任务被消费完）
 	pool.Close()
 	// 如果任务池已经关闭, Put() 方法会返回 ErrPoolAlreadyClosed 错误
-	err = pool.Put(context.Background(), &mortar.Task{
+	err = pool.Put(&mortar.Task{
 		Handler: func(v ...interface{}) {},
 	})
 	if err != nil {
