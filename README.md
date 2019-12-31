@@ -45,7 +45,7 @@ func NewPool(capacity uint64) (*Pool, error)
 
 ### Put
 
-Put() 方法来将一个任务放入池中, 并启动一个 worker。
+Put() 方法来将一个任务放入池中, 如果任务池未满, 则启动一个 worker。
 
 ```go
 func (p *Pool) Put(task *Task) error 
