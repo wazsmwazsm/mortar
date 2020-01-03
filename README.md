@@ -161,6 +161,8 @@ func main() {
 
 使用任务池比直接 goroutine 内存分配节省 7000 倍左右, 内存分配次数减少 2700 倍左右
 
+> tips: 当任务为耗时任务时, 防止任务堆积（消费不过来）可以结合业务调整容量, 或根据业务控制每个任务的超时时间
+
 # License
 
 The Mortar is open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT).
