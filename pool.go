@@ -32,7 +32,6 @@ type Pool struct {
 	runningWorkers uint64
 	state          int64
 	taskC          chan *Task
-	closeC         chan bool
 	PanicHandler   func(interface{})
 }
 
@@ -45,7 +44,6 @@ func NewPool(capacity uint64) (*Pool, error) {
 		capacity: capacity,
 		state:    RUNNING,
 		taskC:    make(chan *Task, capacity),
-		closeC:   make(chan bool),
 	}, nil
 }
 
@@ -102,11 +100,10 @@ func (p *Pool) run() {
 			select {
 			case task, ok := <-p.taskC:
 				if !ok {
+					log.Println("closed")
 					return
 				}
 				task.Handler(task.Params...)
-			case <-p.closeC:
-				return
 			}
 		}
 	}()
@@ -119,6 +116,5 @@ func (p *Pool) Close() {
 	for len(p.taskC) > 0 { // wait all task be consumed
 	}
 
-	p.closeC <- true
 	close(p.taskC)
 }
