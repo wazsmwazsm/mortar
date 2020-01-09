@@ -119,6 +119,6 @@ func (p *Pool) Close() {
 	for len(p.taskC) > 0 { // wait all task be consumed
 	}
 
-	p.closeC <- true
+	close(p.closeC)
 	close(p.taskC)
 }
