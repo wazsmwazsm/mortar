@@ -3,6 +3,7 @@ package mortar
 import (
 	"errors"
 	"log"
+	"sync"
 	"sync/atomic"
 )
 
@@ -33,6 +34,7 @@ type Pool struct {
 	state          int64
 	taskC          chan *Task
 	PanicHandler   func(interface{})
+	sync.Mutex
 }
 
 // NewPool init pool
@@ -49,7 +51,7 @@ func NewPool(capacity uint64) (*Pool, error) {
 
 // GetCap get capacity
 func (p *Pool) GetCap() uint64 {
-	return atomic.LoadUint64(&p.capacity)
+	return p.capacity
 }
 
 // GetRunningWorkers get running workers
@@ -68,7 +70,7 @@ func (p *Pool) decRunning() {
 // Put put a task to pool
 func (p *Pool) Put(task *Task) error {
 
-	if p.state == STOPED {
+	if p.getState() == STOPED {
 		return ErrPoolAlreadyClosed
 	}
 
@@ -76,7 +78,12 @@ func (p *Pool) Put(task *Task) error {
 		p.run()
 	}
 
-	p.taskC <- task
+	// send task safe
+	p.Lock()
+	if p.state == RUNNING {
+		p.taskC <- task
+	}
+	p.Unlock()
 
 	return nil
 }
@@ -108,12 +115,39 @@ func (p *Pool) run() {
 	}()
 }
 
+func (p *Pool) getState() int64 {
+	p.Lock()
+	defer p.Unlock()
+
+	return p.state
+}
+
+func (p *Pool) setState(state int64) {
+	p.Lock()
+	defer p.Unlock()
+
+	p.state = state
+}
+
+// close safe
+func (p *Pool) close() {
+	p.Lock()
+	defer p.Unlock()
+
+	close(p.taskC)
+}
+
 // Close close pool graceful
 func (p *Pool) Close() {
-	p.state = STOPED // stop put task
+
+	if p.getState() == STOPED {
+		return
+	}
+
+	p.setState(STOPED) // stop put task
 
 	for len(p.taskC) > 0 { // wait all task be consumed
 	}
 
-	close(p.taskC)
+	p.close()
 }
