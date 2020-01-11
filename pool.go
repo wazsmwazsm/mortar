@@ -100,7 +100,6 @@ func (p *Pool) run() {
 			select {
 			case task, ok := <-p.taskC:
 				if !ok {
-					log.Println("closed")
 					return
 				}
 				task.Handler(task.Params...)
