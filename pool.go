@@ -74,9 +74,12 @@ func (p *Pool) Put(task *Task) error {
 		return ErrPoolAlreadyClosed
 	}
 
+	// safe run worker
+	p.Lock()
 	if p.GetRunningWorkers() < p.GetCap() {
 		p.run()
 	}
+	p.Unlock()
 
 	// send task safe
 	p.Lock()
