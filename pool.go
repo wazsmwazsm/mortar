@@ -5,6 +5,7 @@ import (
 	"log"
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
 var (
@@ -150,6 +151,7 @@ func (p *Pool) Close() {
 	p.setState(STOPED) // stop put task
 
 	for len(p.taskC) > 0 { // wait all task be consumed
+		time.Sleep(1e6) // reduce CPU load
 	}
 
 	p.close()
