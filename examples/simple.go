@@ -14,16 +14,16 @@ func main() {
 	}
 
 	wg := new(sync.WaitGroup)
-	// 创建任务
-	task := &mortar.Task{
-		Handler: func(v ...interface{}) {
-			wg.Done()
-			fmt.Println(v)
-		},
-	}
 
 	for i := 0; i < 1000; i++ {
 		wg.Add(1)
+		// 创建任务
+		task := &mortar.Task{
+			Handler: func(v ...interface{}) {
+				wg.Done()
+				fmt.Println(v)
+			},
+		}
 		// 添加任务函数的参数
 		task.Params = []interface{}{i, i * 2, "hello"}
 		// 将任务放入任务池
