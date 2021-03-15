@@ -17,6 +17,10 @@ A goroutine task pool
 #### v1.5
 - 优化锁，解决只有一个 woker 时产生 panic 后无发消费 task 导致 deadlock 的问题 (见 [issue 极端情况 #4](https://github.com/wazsmwazsm/mortar/issues/4))
 
+### v2.x
+#### v2.0
+- 支持 context
+
 ## 解决什么问题
 
 go 的 goroutine 提供了一种较线程而言更廉价的方式处理并发场景, 但 goroutine 太多会导致调度性能下降、GC 频繁、内存暴涨, 引发一系列问题。

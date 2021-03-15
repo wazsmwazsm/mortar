@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"mortar"
 )
@@ -12,21 +13,23 @@ func main() {
 func case1() {
 	fmt.Println("--- case1 start ---")
 	defer fmt.Println("--- case1 stoped ---")
-
-	pool, err := mortar.NewPool(1)
+	ctx := context.TODO()
+	pool, err := mortar.NewPool(ctx, 1)
 	if err != nil {
 		panic(err)
 	}
 
 	pool.Put(&mortar.Task{
-		Handler: func(v ...interface{}) {
+		Ctx: ctx,
+		Handler: func(ctx context.Context, v ...interface{}) {
 			panic("aaaaaa!")
 		},
 		Params: []interface{}{"hi!"},
 	})
 
 	pool.Put(&mortar.Task{
-		Handler: func(v ...interface{}) {
+		Ctx: ctx,
+		Handler: func(ctx context.Context, v ...interface{}) {
 			fmt.Println(v)
 		},
 		Params: []interface{}{"hi!"},
@@ -34,7 +37,8 @@ func case1() {
 
 	pool.Close()
 	err = pool.Put(&mortar.Task{
-		Handler: func(v ...interface{}) {},
+		Ctx:     ctx,
+		Handler: func(ctx context.Context, v ...interface{}) {},
 	})
 	if err != nil {
 		fmt.Println(err)

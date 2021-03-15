@@ -1,14 +1,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"mortar"
 	"sync"
 )
 
 func main() {
+	ctx := context.TODO()
 	// 创建容量为 10 的任务池
-	pool, err := mortar.NewPool(10)
+	pool, err := mortar.NewPool(ctx, 10)
 	if err != nil {
 		panic(err)
 	}
@@ -19,7 +21,7 @@ func main() {
 		wg.Add(1)
 		// 创建任务
 		task := &mortar.Task{
-			Handler: func(v ...interface{}) {
+			Handler: func(ctx context.Context, v ...interface{}) {
 				wg.Done()
 				fmt.Println(v)
 			},
@@ -33,7 +35,7 @@ func main() {
 	wg.Add(1)
 	// 再创建一个任务
 	pool.Put(&mortar.Task{
-		Handler: func(v ...interface{}) {
+		Handler: func(ctx context.Context, v ...interface{}) {
 			wg.Done()
 			fmt.Println(v)
 		},
@@ -46,7 +48,7 @@ func main() {
 	pool.Close()
 	// 如果任务池已经关闭, Put() 方法会返回 ErrPoolAlreadyClosed 错误
 	err = pool.Put(&mortar.Task{
-		Handler: func(v ...interface{}) {},
+		Handler: func(ctx context.Context, v ...interface{}) {},
 	})
 	if err != nil {
 		fmt.Println(err) // print: pool already closed

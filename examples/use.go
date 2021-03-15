@@ -1,20 +1,23 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"mortar"
 	"time"
 )
 
 func main() {
-	pool, err := mortar.NewPool(10)
+	ctx := context.TODO()
+	pool, err := mortar.NewPool(ctx, 10)
 	if err != nil {
 		panic(err)
 	}
 
 	for i := 0; i < 20; i++ {
 		pool.Put(&mortar.Task{
-			Handler: func(v ...interface{}) {
+			Ctx: ctx,
+			Handler: func(ctx context.Context, v ...interface{}) {
 				fmt.Println(v)
 			},
 			Params: []interface{}{i},

@@ -1,13 +1,15 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"mortar"
 	"time"
 )
 
 func main() {
-	pool, err := mortar.NewPool(10)
+	ctx := context.TODO()
+	pool, err := mortar.NewPool(ctx, 10)
 	if err != nil {
 		panic(err)
 	}
@@ -17,7 +19,7 @@ func main() {
 	}
 
 	pool.Put(&mortar.Task{
-		Handler: func(v ...interface{}) {
+		Handler: func(ctx context.Context, v ...interface{}) {
 			panic("somthing wrong!")
 		},
 	})

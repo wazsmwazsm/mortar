@@ -1,6 +1,7 @@
 package mortar
 
 import (
+	"context"
 	"errors"
 	"log"
 	"sync"
@@ -24,12 +25,14 @@ const (
 
 // Task task to-do
 type Task struct {
-	Handler func(v ...interface{})
+	Ctx     context.Context
+	Handler func(ctx context.Context, v ...interface{})
 	Params  []interface{}
 }
 
 // Pool task pool
 type Pool struct {
+	ctx            context.Context
 	capacity       uint64
 	runningWorkers uint64
 	status         int64
@@ -39,11 +42,17 @@ type Pool struct {
 }
 
 // NewPool init pool
-func NewPool(capacity uint64) (*Pool, error) {
+func NewPool(ctx context.Context, capacity uint64) (*Pool, error) {
 	if capacity <= 0 {
 		return nil, ErrInvalidPoolCap
 	}
+
+	if ctx == nil {
+		ctx = context.TODO()
+	}
+
 	p := &Pool{
+		ctx:      ctx,
 		capacity: capacity,
 		status:   RUNNING,
 		chTask:   make(chan *Task, capacity),
@@ -95,6 +104,9 @@ func (p *Pool) Put(task *Task) error {
 
 	// send task
 	if p.status == RUNNING {
+		if task.Ctx == nil {
+			task.Ctx = context.TODO()
+		}
 		p.chTask <- task
 	}
 
@@ -119,11 +131,14 @@ func (p *Pool) run() {
 
 		for {
 			select {
+			case <-p.ctx.Done():
+				p.Close()
+				return
 			case task, ok := <-p.chTask:
 				if !ok {
 					return
 				}
-				task.Handler(task.Params...)
+				task.Handler(task.Ctx, task.Params...)
 			}
 		}
 	}()
