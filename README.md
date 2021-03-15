@@ -3,6 +3,20 @@ A goroutine task pool
 
 一个简单好用的高性能任务池, 代码只有 100 多行。
 
+## 版本更新日志
+
+### v1.x
+#### v1.1
+- 部分冗余逻辑优化
+#### v1.2
+- 修复数据竞争 bug
+#### v1.3
+- 安全运行 worker
+#### v1.4
+- 退出等待 taskC 清空时增加 sleep 减少 cpu 负载
+#### v1.5
+- 优化锁，解决只有一个 woker 时产生 panic 后无发消费 task 导致 deadlock 的问题 (见 [issue 极端情况 #4](https://github.com/wazsmwazsm/mortar/issues/4))
+
 ## 解决什么问题
 
 go 的 goroutine 提供了一种较线程而言更廉价的方式处理并发场景, 但 goroutine 太多会导致调度性能下降、GC 频繁、内存暴涨, 引发一系列问题。

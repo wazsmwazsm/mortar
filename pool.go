@@ -8,18 +8,18 @@ import (
 	"time"
 )
 
+// errors
 var (
-	// ErrInvalidPoolCap return if pool size <= 0
+	// return if pool size <= 0
 	ErrInvalidPoolCap = errors.New("invalid pool cap")
-	// ErrPoolAlreadyClosed put task but pool already closed
+	// put task but pool already closed
 	ErrPoolAlreadyClosed = errors.New("pool already closed")
 )
 
+// running status
 const (
-	// RUNNING pool is running
 	RUNNING = 1
-	// STOPED pool is stoped
-	STOPED = 0
+	STOPED  = 0
 )
 
 // Task task to-do
@@ -32,8 +32,8 @@ type Task struct {
 type Pool struct {
 	capacity       uint64
 	runningWorkers uint64
-	state          int64
-	taskC          chan *Task
+	status         int64
+	chTask         chan *Task
 	PanicHandler   func(interface{})
 	sync.Mutex
 }
@@ -43,11 +43,22 @@ func NewPool(capacity uint64) (*Pool, error) {
 	if capacity <= 0 {
 		return nil, ErrInvalidPoolCap
 	}
-	return &Pool{
+	p := &Pool{
 		capacity: capacity,
-		state:    RUNNING,
-		taskC:    make(chan *Task, capacity),
-	}, nil
+		status:   RUNNING,
+		chTask:   make(chan *Task, capacity),
+	}
+
+	return p, nil
+}
+
+func (p *Pool) checkWorker() {
+	p.Lock()
+	defer p.Unlock()
+
+	if p.runningWorkers == 0 && len(p.chTask) > 0 {
+		p.run()
+	}
 }
 
 // GetCap get capacity
@@ -70,24 +81,22 @@ func (p *Pool) decRunning() {
 
 // Put put a task to pool
 func (p *Pool) Put(task *Task) error {
+	p.Lock()
+	defer p.Unlock()
 
-	if p.getState() == STOPED {
+	if p.status == STOPED {
 		return ErrPoolAlreadyClosed
 	}
 
-	// safe run worker
-	p.Lock()
+	// run worker
 	if p.GetRunningWorkers() < p.GetCap() {
 		p.run()
 	}
-	p.Unlock()
 
-	// send task safe
-	p.Lock()
-	if p.state == RUNNING {
-		p.taskC <- task
+	// send task
+	if p.status == RUNNING {
+		p.chTask <- task
 	}
-	p.Unlock()
 
 	return nil
 }
@@ -105,11 +114,12 @@ func (p *Pool) run() {
 					log.Printf("Worker panic: %s\n", r)
 				}
 			}
+			p.checkWorker() // check worker avoid no worker running
 		}()
 
 		for {
 			select {
-			case task, ok := <-p.taskC:
+			case task, ok := <-p.chTask:
 				if !ok {
 					return
 				}
@@ -119,18 +129,17 @@ func (p *Pool) run() {
 	}()
 }
 
-func (p *Pool) getState() int64 {
+func (p *Pool) setStatus(status int64) bool {
 	p.Lock()
 	defer p.Unlock()
 
-	return p.state
-}
+	if p.status == status {
+		return false
+	}
 
-func (p *Pool) setState(state int64) {
-	p.Lock()
-	defer p.Unlock()
+	p.status = status
 
-	p.state = state
+	return true
 }
 
 // close safe
@@ -138,21 +147,18 @@ func (p *Pool) close() {
 	p.Lock()
 	defer p.Unlock()
 
-	close(p.taskC)
+	close(p.chTask)
 }
 
 // Close close pool graceful
 func (p *Pool) Close() {
+	defer p.close()
 
-	if p.getState() == STOPED {
+	if !p.setStatus(STOPED) { // stop put task
 		return
 	}
 
-	p.setState(STOPED) // stop put task
-
-	for len(p.taskC) > 0 { // wait all task be consumed
+	for len(p.chTask) > 0 { // wait all task be consumed
 		time.Sleep(1e6) // reduce CPU load
 	}
-
-	p.close()
 }
