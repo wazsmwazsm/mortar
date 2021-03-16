@@ -9,7 +9,9 @@ import (
 )
 
 func main() {
-	ctx := context.TODO()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	pool, err := mortar.NewPool(10)
 	if err != nil {
 		panic(err)
@@ -17,13 +19,19 @@ func main() {
 
 	for i := 0; i < 20; i++ {
 		pool.Put(&mortar.Task{
-			Ctx: ctx,
+			Ctx: ctx, // use context
 			Handler: func(ctx context.Context, v ...interface{}) {
-				fmt.Println(v)
+				for {
+					select {
+					case <-ctx.Done():
+						fmt.Printf("%v stoped\n", v) // after 5s print this
+						return
+					}
+				}
 			},
 			Params: []interface{}{i},
 		})
 	}
 
-	time.Sleep(1e9)
+	time.Sleep(10 * time.Second)
 }

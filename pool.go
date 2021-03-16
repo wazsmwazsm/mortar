@@ -32,7 +32,6 @@ type Task struct {
 
 // Pool task pool
 type Pool struct {
-	ctx            context.Context
 	capacity       uint64
 	runningWorkers uint64
 	status         int64
@@ -42,17 +41,12 @@ type Pool struct {
 }
 
 // NewPool init pool
-func NewPool(ctx context.Context, capacity uint64) (*Pool, error) {
+func NewPool(capacity uint64) (*Pool, error) {
 	if capacity <= 0 {
 		return nil, ErrInvalidPoolCap
 	}
 
-	if ctx == nil {
-		ctx = context.TODO()
-	}
-
 	p := &Pool{
-		ctx:      ctx,
 		capacity: capacity,
 		status:   RUNNING,
 		chTask:   make(chan *Task, capacity),
@@ -131,9 +125,6 @@ func (p *Pool) run() {
 
 		for {
 			select {
-			case <-p.ctx.Done():
-				p.Close()
-				return
 			case task, ok := <-p.chTask:
 				if !ok {
 					return
@@ -167,8 +158,6 @@ func (p *Pool) close() {
 
 // Close close pool graceful
 func (p *Pool) Close() {
-	defer p.close()
-
 	if !p.setStatus(STOPED) { // stop put task
 		return
 	}
@@ -176,4 +165,6 @@ func (p *Pool) Close() {
 	for len(p.chTask) > 0 { // wait all task be consumed
 		time.Sleep(1e6) // reduce CPU load
 	}
+
+	p.close()
 }

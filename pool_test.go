@@ -34,7 +34,7 @@ func BenchmarkGoroutine(b *testing.B) {
 
 func BenchmarkPut(b *testing.B) {
 	ctx := context.TODO()
-	pool, err := NewPool(ctx, 10)
+	pool, err := NewPool(10)
 	if err != nil {
 		b.Error(err)
 	}
@@ -60,7 +60,7 @@ func BenchmarkGoroutineTimelife(b *testing.B) {
 
 func BenchmarkPutTimelife(b *testing.B) {
 	ctx := context.TODO()
-	pool, err := NewPool(ctx, 10)
+	pool, err := NewPool(10)
 	if err != nil {
 		b.Error(err)
 	}
@@ -87,7 +87,7 @@ func BenchmarkGoroutineSetTimes(b *testing.B) {
 
 func BenchmarkPoolPutSetTimes(b *testing.B) {
 	ctx := context.TODO()
-	pool, err := NewPool(ctx, 20)
+	pool, err := NewPool(20)
 	if err != nil {
 		b.Error(err)
 	}
@@ -113,7 +113,7 @@ func BenchmarkGoroutineTimeLifeSetTimes(b *testing.B) {
 
 func BenchmarkPoolTimeLifeSetTimes(b *testing.B) {
 	ctx := context.TODO()
-	pool, err := NewPool(ctx, 20)
+	pool, err := NewPool(20)
 	if err != nil {
 		b.Error(err)
 	}

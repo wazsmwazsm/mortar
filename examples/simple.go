@@ -9,9 +9,8 @@ import (
 )
 
 func main() {
-	ctx := context.TODO()
 	// 创建容量为 10 的任务池
-	pool, err := mortar.NewPool(ctx, 10)
+	pool, err := mortar.NewPool(10)
 	if err != nil {
 		panic(err)
 	}

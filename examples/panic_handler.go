@@ -9,8 +9,7 @@ import (
 )
 
 func main() {
-	ctx := context.TODO()
-	pool, err := mortar.NewPool(ctx, 10)
+	pool, err := mortar.NewPool(10)
 	if err != nil {
 		panic(err)
 	}

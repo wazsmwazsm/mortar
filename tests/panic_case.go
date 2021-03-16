@@ -15,13 +15,13 @@ func case1() {
 	fmt.Println("--- case1 start ---")
 	defer fmt.Println("--- case1 stoped ---")
 	ctx := context.TODO()
-	pool, err := mortar.NewPool(ctx, 1)
+	pool, err := mortar.NewPool(1)
 	if err != nil {
 		panic(err)
 	}
 
 	pool.Put(&mortar.Task{
-		Ctx: ctx,
+		Ctx: context.TODO(),
 		Handler: func(ctx context.Context, v ...interface{}) {
 			panic("aaaaaa!")
 		},
