@@ -3,8 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"mortar"
 	"sync"
+
+	"github.com/wazsmwazsm/mortar"
 )
 
 func main() {

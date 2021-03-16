@@ -3,7 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"mortar"
+
+	"github.com/wazsmwazsm/mortar"
 )
 
 func main() {
