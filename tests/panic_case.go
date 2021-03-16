@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"mortar"
+
+	"github.com/wazsmwazsm/mortar"
 )
 
 func main() {

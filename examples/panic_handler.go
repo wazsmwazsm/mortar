@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"mortar"
 	"time"
+
+	"github.com/wazsmwazsm/mortar"
 )
 
 func main() {

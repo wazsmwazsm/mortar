@@ -97,6 +97,11 @@ pool.PanicHandler = func(r interface{}) {
 }
 ```
 
+## 安装 
+```bash
+go get github.com/wazsmwazsm/mortar
+```
+
 ## 例子
 
 ```go
