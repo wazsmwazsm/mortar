@@ -101,7 +101,16 @@ pool.PanicHandler = func(r interface{}) {
 	log.Println(r) 
 }
 ```
+## 安装
 
+v1.x
+```bash
+go get github.com/wazsmwazsm/mortar@v1.5.1
+```
+v2.x
+```bash
+go get github.com/wazsmwazsm/mortar@v2.0.1
+```
 
 ## 例子
 
