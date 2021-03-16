@@ -152,7 +152,6 @@ func (p *Pool) close() {
 
 // Close close pool graceful
 func (p *Pool) Close() {
-	defer p.close()
 
 	if !p.setStatus(STOPED) { // stop put task
 		return
@@ -161,4 +160,6 @@ func (p *Pool) Close() {
 	for len(p.chTask) > 0 { // wait all task be consumed
 		time.Sleep(1e6) // reduce CPU load
 	}
+
+	p.close()
 }
