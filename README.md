@@ -105,7 +105,7 @@ pool.PanicHandler = func(r interface{}) {
 
 v1.x
 ```bash
-go get github.com/wazsmwazsm/mortar@v1.5.1
+go get github.com/wazsmwazsm/mortar@v1.5.2
 ```
 v2.x
 ```bash
