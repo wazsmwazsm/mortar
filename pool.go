@@ -148,14 +148,6 @@ func (p *Pool) setStatus(status int64) bool {
 	return true
 }
 
-// close safe
-func (p *Pool) close() {
-	p.Lock()
-	defer p.Unlock()
-
-	close(p.chTask)
-}
-
 // Close close pool graceful
 func (p *Pool) Close() {
 	if !p.setStatus(STOPED) { // stop put task
@@ -166,5 +158,5 @@ func (p *Pool) Close() {
 		time.Sleep(1e6) // reduce CPU load
 	}
 
-	p.close()
+	close(p.chTask)
 }
