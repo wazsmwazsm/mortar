@@ -34,6 +34,7 @@ type Pool struct {
 	runningWorkers uint64
 	status         int64
 	chTask         chan *Task
+	chIdle         chan struct{}
 	PanicHandler   func(interface{})
 	sync.Mutex
 }
@@ -47,6 +48,7 @@ func NewPool(capacity uint64) (*Pool, error) {
 		capacity: capacity,
 		status:   RUNNING,
 		chTask:   make(chan *Task, capacity),
+		chIdle:   make(chan struct{}, capacity),
 	}
 
 	return p, nil
@@ -88,9 +90,13 @@ func (p *Pool) Put(task *Task) error {
 		return ErrPoolAlreadyClosed
 	}
 
-	// run worker
-	if p.GetRunningWorkers() < p.GetCap() {
-		p.run()
+	// check if there are idle workers
+	select {
+	case <-p.chIdle:
+	default:
+		if p.GetRunningWorkers() < p.GetCap() {
+			p.run()
+		}
 	}
 
 	// send task
@@ -103,6 +109,7 @@ func (p *Pool) Put(task *Task) error {
 
 func (p *Pool) run() {
 	p.incRunning()
+	p.chIdle <- struct{}{}
 
 	go func() {
 		defer func() {
@@ -124,6 +131,7 @@ func (p *Pool) run() {
 					return
 				}
 				task.Handler(task.Params...)
+				p.chIdle <- struct{}{}
 			}
 		}
 	}()
